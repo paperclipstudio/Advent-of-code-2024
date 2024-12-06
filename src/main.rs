@@ -8,5 +8,5 @@ mod day3;
 
 fn main() {
     println!("Hello, world!");
-    day3::part1();
+    day3::part2();
 }
