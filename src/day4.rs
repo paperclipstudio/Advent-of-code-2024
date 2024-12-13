@@ -4,6 +4,18 @@ use std::collections::HashMap;
 use std::env;
 use std::fs;
 
+const SAMPLE_2: &'static str = "XXX
+0123456789
+MMMSXXMASM0
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX";
 const SAMPLE: &'static str = "MMMSXXMASM
 MSAMXMSMSA
 AMXSXMAAMM
@@ -44,23 +56,43 @@ fn count_xmas(contents: String) -> i32 {
     let mut count = 0;
     for y in 0..list_2d.len() {
         for x in 0..list_2d[0].len() {
-            let right = (0..4).map(|i| (i + x, y)).collect::<Vec<_>>();
-            let down = (0..4).map(|i| (x, y + i)).collect::<Vec<_>>();
-            let diag_right = (0..4).map(|i| (x + i, y + i)).collect::<Vec<_>>();
-            let diag_left = (0..4).map(|i| (x - i.min(x), y + i)).collect::<Vec<_>>();
+            let right = (0..4).map(|i| (Some(i + x), Some(y))).collect::<Vec<_>>();
+            let down = (0..4).map(|i| (Some(x), Some(y + i))).collect::<Vec<_>>();
+            let diag_right = (0..4)
+                .map(|i| (Some(x + i), Some(y + i)))
+                .collect::<Vec<_>>();
+            let diag_left = (0..4)
+                .map(|i| (x.checked_sub(i), Some(y + i)))
+                .collect::<Vec<_>>();
             let forward = [1, 2, 4, 8];
             let reverse = [8, 4, 2, 1];
 
             let all = [right, down, diag_right, diag_left].map(|pos| {
                 pos.iter()
-                    .map(|(x, y)| (*x, (*y).clamp(0, list_2d.len() - 1)))
-                    .map(|(x, y)| (x.clamp(0, list_2d[y].len() - 20), y))
+                    .filter_map(|(x, y)| Some(((*x)?, (*y)?)))
+                    .filter_map(|(x, y)| {
+                        if y < list_2d.len() {
+                            Some((x, y))
+                        } else {
+                            None
+                        }
+                    })
+                    .filter_map(|(x, y)| {
+                        if x < list_2d[y].len() {
+                            Some((x, y))
+                        } else {
+                            None
+                        }
+                    })
                     .map(|(x, y)| list_2d[y][x])
                     .collect::<Vec<_>>()
             });
-            for set in all {
-                println!("{set:?}");
-                if set == forward || set == reverse {
+            for (i, set) in all.iter().enumerate() {
+                let direction = ["Ri", "Do", "DR", "DL"];
+
+                if *set == forward || *set == reverse {
+                    let dir = direction[i];
+                    println!("{x} {y} {dir} {set:?} ");
                     count += 1;
                 }
             }
@@ -72,6 +104,9 @@ fn count_xmas(contents: String) -> i32 {
     // 2519 too low
     // 2538 too low
     // 2447 too low
+    // 2635 XXX
+    // 2573
+
     count
 }
 
