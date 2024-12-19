@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::env;
 use std::fs;
 
-const SAMPLE_2: &'static str = "XXX
+const SAMPLE_2: &str = "XXX
 0123456789
 MMMSXXMASM0
 MSAMXMSMSA
@@ -16,7 +16,7 @@ SMSMSASXSS
 SAXAMASAAA
 MAMMMXMMMM
 MXMXAXMASX";
-const SAMPLE: &'static str = "MMMSXXMASM
+const SAMPLE: &str = "MMMSXXMASM
 MSAMXMSMSA
 AMXSXMAAMM
 MSAMASMSMX
@@ -32,6 +32,75 @@ pub fn part1() {
         fs::read_to_string("src/day4.txt").expect("Should have been able to read the file");
     let count = count_xmas(contents);
     println!("{count}");
+}
+
+pub fn part2() {
+    let contents =
+        fs::read_to_string("src/day4.txt").expect("Should have been able to read the file");
+    let count = count_cross_mas(contents);
+    println!("{count}");
+}
+
+fn count_cross_mas(contents: String) -> usize {
+    let list_2d = contents.lines().collect::<Vec<_>>();
+
+    let count = itertools::iproduct!(0..list_2d[0].len(), 0..list_2d.len())
+        .map(|(x, y)| (y, x))
+        .filter(|(x, y)| list_2d[*y].chars().nth(*x) == Some('A'))
+        .map(|(x, y)| {
+            let ne = (x.checked_add(1), y.checked_sub(1));
+            let se = (x.checked_add(1), y.checked_add(1));
+            let sw = (x.checked_sub(1), y.checked_add(1));
+            let nw = (x.checked_sub(1), y.checked_sub(1));
+            [ne, se, sw, nw]
+        })
+        .map(|all| all.map(|(x, y)| Some((x?, y?))))
+        .filter(|all| all.iter().all(|x| x.is_some()))
+        .filter_map(|[a, b, c, d]| Some([a?, b?, c?, d?]))
+        .map(|all| all.map(|(x, y)| list_2d.get(y)?.chars().nth(x)))
+        .filter_map(|[a, b, c, d]| Some([a?, b?, c?, d?]))
+        .filter(|chars| chars.iter().all(|c| *c == 'M' || *c == 'S'))
+        .filter(|[a, b, c, d]| (a == b && c == d && a != c) || (a == d && b == c && a != b))
+        .count();
+    /*
+                    .filter_map(|(x, y)| {
+                        if y < list_2d.len() {
+                            Some((x, y))
+                        } else {
+                            None
+                        }
+                    })
+                    .filter_map(|(x, y)| {
+                        if x < list_2d[y].len() {
+                            Some((x, y))
+                        } else {
+                            None
+                        }
+                    })
+                    .map(|(x, y)| list_2d[y].chars())
+                    .filter()
+                    .collect::<Vec<_>>();
+                for (i, set) in all.iter().enumerate() {
+                    let direction = ["Ri", "Do", "DR", "DL"];
+
+                    if *set == forward || *set == reverse {
+                        let dir = direction[i];
+                        println!("{x} {y} {dir} {set:?} ");
+                        count += 1;
+                    }
+                }
+            });
+    */
+
+    println!("{count}");
+    // 326 too low
+    // 2519 too low
+    // 2538 too low
+    // 2447 too low
+    // 2635 XXX
+    // 2573
+
+    count
 }
 
 fn count_xmas(contents: String) -> i32 {
@@ -154,5 +223,10 @@ OOOX";
     #[test]
     fn sample() {
         assert_eq!(18, count_xmas(String::from(SAMPLE)));
+    }
+
+    #[test]
+    fn sample_2() {
+        assert_eq!(9, count_cross_mas(String::from(SAMPLE)));
     }
 }
